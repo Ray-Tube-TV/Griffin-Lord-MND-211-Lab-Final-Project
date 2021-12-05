@@ -1,0 +1,99 @@
+
+/*
+Griffin Lord's NDM 211 Lab Final Project
+
+12/5/21
+
+"The Shot Doc"
+
+This code made it so that you can fill up a shot glass with the right amount of water. It 
+lets you know when you've done this by beeping and using a servo motor to raise a flag.The water
+level is sensed with a water level sensor, the flag is controlled by a servo, and the beep is
+emmited by a passive buzzer.
+
+Tutorials used/modifies:
+https://create.arduino.cc/projecthub/SURYATEJA/use-a-buzzer-module-piezo-speaker-using-arduino-uno-89df45
+https://www.arduino.cc/en/Tutorial/LibraryExamples/Sweep
+https://lastminuteengineers.com/water-level-sensor-arduino-tutorial/
+*/
+
+
+
+
+// Sensor pins
+#include <Servo.h>
+Servo myservo;
+#define sensorPower 3
+#define sensorPin A0
+#define buzzer 9
+int pos = 0;
+int lastPos = 0;
+int lastLevel = 0;
+int level;
+// Value for storing water level
+int val = 0;
+float scaler;
+int adjustment = 140;
+
+
+
+void setup() {
+  myservo.attach(6);
+  // Set D7 as an OUTPUT
+  pinMode(sensorPower, OUTPUT);
+
+  // Set to LOW so no power flows through the sensor
+  digitalWrite(sensorPower, LOW);
+  lastLevel = readSensor();
+  //set servo intial pos
+  myservo.write(pos);
+  pinMode(buzzer, OUTPUT);
+  Serial.begin(9600);
+
+
+  scaler = 3.91;//90/15;
+}
+
+void loop() {
+  //get the reading from the function below and print it
+  lastLevel = level;
+  level = readSensor();
+
+  Serial.print("Water level: ");
+  Serial.println(level);
+
+  delay(1000);
+
+  if (level > adjustment) {
+    pos = int (scaler * (float (level - adjustment)));
+    myservo.write(pos);
+  }
+  else {
+    pos = 0;
+    myservo.write(pos);
+  }
+
+  Serial.println((scaler * (float (level - lastLevel))));
+  //  if (level > 50) {
+  //    pos = 90;
+  //myservo.write(pos);
+  //  }
+  if (level > 158) {
+    digitalWrite(buzzer, HIGH);
+  } else {
+    // Beep
+    digitalWrite(buzzer, HIGH);
+    delay(10);
+    digitalWrite(buzzer, LOW);
+    delay(10);
+  }
+}
+
+//This is a function used to get the reading
+int readSensor() {
+  digitalWrite(sensorPower, HIGH);  // Turn the sensor ON
+  delay(1);              // wait 10 milliseconds
+  val = analogRead(sensorPin);    // Read the analog value form sensor
+  digitalWrite(sensorPower, LOW);   // Turn the sensor OFF
+  return val;             // send current reading
+}
